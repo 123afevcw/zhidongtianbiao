@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱奇艺取证清单 - 自动化填充工具 Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00BE06;
+            --primary-dark: #00a805;
+            --primary-light: #e6f7e6;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #e0e4e8;
+            --danger: #ff4d4f;
+            --success: #52c41a;
+            --warning: #faad14;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 22px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 50px;
+            border-radius: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0,190,6,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header h1 {
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+            position: relative;
+        }
+
+        .header p {
+            font-size: 26px;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+        }
+
+        .header .badge-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .header .badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-secondary {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card-title .icon {
+            width: 55px;
+            height: 55px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+        }
+
+        /* 统计栏 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 35px 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,190,6,0.25);
+            transition: transform 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-item.duplicate {
+            background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+            box-shadow: 0 8px 30px rgba(255,77,79,0.25);
+        }
+
+        .stat-item.success {
+            background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+            box-shadow: 0 8px 30px rgba(82,196,26,0.25);
+        }
+
+        .stat-item.info {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            box-shadow: 0 8px 30px rgba(24,144,255,0.25);
+        }
+
+        .stat-value {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 22px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        @media (max-width: 1200px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 文件上传区域 */
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-zone {
+            border: 4px dashed var(--border);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .upload-zone .icon-big {
+            font-size: 100px;
+            margin-bottom: 25px;
+            opacity: 0.6;
+        }
+
+        .upload-zone h3 {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        .upload-zone p {
+            font-size: 22px;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+        }
+
+        .upload-zone .btn-upload {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--primary);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 14px;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .upload-zone .btn-upload:hover {
+            background: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* 文件信息 */
+        .file-info {
+            background: #f6ffed;
+            border: 2px solid #b7eb8f;
+            padding: 25px 30px;
+            border-radius: 16px;
+            margin-top: 25px;
+            display: none;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .file-info.active {
+            display: flex;
+        }
+
+        .file-info .file-icon {
+            font-size: 48px;
+        }
+
+        .file-info .file-details h4 {
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .file-info .file-details p {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        .file-info .btn-remove {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* 工作表选择和日期筛选 */
+        .options-panel {
+            margin: 25px 0;
+            padding: 30px;
+            background: #f6ffed;
+            border-radius: 16px;
+            border: 2px solid #b7eb8f;
+            display: none;
+        }
+
+        .options-panel.active {
+            display: block;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .option-group label {
+            display: block;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #389e0d;
+        }
+
+        .option-group select,
+        .option-group input[type="date"] {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 22px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .option-group input[type="date"]:required:invalid {
+            color: #999;
+        }
+
+        .date-hint {
+            font-size: 18px;
+            color: var(--danger);
+            margin-top: 8px;
+        }
+
+        /* 开始识别按钮 */
+        .btn-recognize {
+            width: 100%;
+            padding: 25px;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(0,190,6,0.3);
+        }
+
+        .btn-recognize:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,190,6,0.4);
+        }
+
+        .btn-recognize:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 14px;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,190,6,0.35);
+        }
+
+        .btn-secondary {
+            background: #f0f2f5;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #e4e7eb;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cf1322;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d48806;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        /* 列映射说明 */
+        .mapping-info {
+            background: linear-gradient(135deg, #f6ffed 0%, #e6f7ff 100%);
+            border: 2px solid #b7eb8f;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }
+
+        .mapping-info h4 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #389e0d;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 12px;
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 19px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #d9f7be;
+        }
+
+        .mapping-item .col-num {
+            background: var(--primary);
+            color: white;
+            min-width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .mapping-item .col-value {
+            color: var(--text-secondary);
+            margin-left: auto;
+            font-weight: 500;
+            font-size: 17px;
+        }
+
+        /* 表格 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 20px;
+            background: white;
+        }
+
+        th {
+            background: #1a1a2e;
+            color: white;
+            padding: 20px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 22px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #f5f7fa;
+        }
+
+        tr.filtered {
+            background: #fff7e6;
+        }
+
+        tr.filtered td {
+            color: #d48806;
+        }
+
+        tr.duplicate {
+            background: #fff1f0;
+        }
+
+        tr.duplicate td {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .input-cell {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 20px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .input-cell:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,190,6,0.1);
+        }
+
+        select.input-cell {
+            cursor: pointer;
+        }
+
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .tag-tsa {
+            background: #e6f7ff;
+            color: #096dd9;
+            border: 1px solid #91d5ff;
+        }
+
+        .tag-cuny {
+            background: #f6ffed;
+            color: #389e0d;
+            border: 1px solid #b7eb8f;
+        }
+
+        .tag-dup {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+
+        .tag-unique {
+            background: #f6ffed;
+            color: #389e0d;
+            border: 1px solid #b7eb8f;
+        }
+
+        .tag-fixed {
+            background: #fff7e6;
+            color: #d48806;
+            border: 1px solid #ffd591;
+        }
+
+        .tag-smart {
+            background: #f9f0ff;
+            color: #722ed1;
+            border: 1px solid #d3adf7;
+        }
+
+        .tag-filtered {
+            background: #fff7e6;
+            color: #d48806;
+            border: 1px solid #ffd591;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon {
+            font-size: 100px;
+            margin-bottom: 30px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 40px;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            font-size: 26px;
+        }
+
+        /* 结果表格 */
+        .result-section {
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 40px;
+            }
+            
+            .card {
+                padding: 30px;
+            }
+            
+            .btn {
+                padding: 18px 30px;
+                font-size: 22px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .card {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .upload-zone.dragover {
+            animation: pulse 1s infinite;
+        }
+
+        /* 隐藏列控制 */
+        .toggle-dup {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 22px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-dup input {
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            margin-top: 25px;
+            font-size: 28px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p>正在处理数据...</p>
+    </div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>📋 爱奇艺取证清单</h1>
+            <p>自动化填充工具 Pro - 16列标准格式输出</p>
+            <div class="badge-group">
+                <span class="badge badge-primary">大字体版 · 舒适阅读</span>
+                <span class="badge badge-secondary">16列标准格式</span>
+                <span class="badge badge-secondary">日期筛选 · 智能识别</span>
+            </div>
+        </div>
+
+        <!-- 统计栏 -->
+        <div class="stats">
+            <div class="stat-item info">
+                <div class="stat-value" id="fileCount">0</div>
+                <div class="stat-label">已导入文件</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">总记录数</div>
+            </div>
+            <div class="stat-item duplicate">
+                <div class="stat-value" id="dupCount">0</div>
+                <div class="stat-label">重复记录</div>
+            </div>
+            <div class="stat-item success">
+                <div class="stat-value" id="uniqueCount">0</div>
+                <div class="stat-label">有效记录</div>
+            </div>
+        </div>
+
+        <!-- 输出格式说明 -->
+        <div class="card">
+            <div class="card-title">
+                <div class="icon">📋</div>
+                输出格式标准（16列）
+            </div>
+            <div class="mapping-info">
+                <h4>📤 导出Excel的列格式（A-P列）</h4>
+                <div class="mapping-grid">
+                    <div class="mapping-item">
+                        <span class="col-num">A</span>
+                        <span>（空列）</span>
+                        <span class="col-value">-</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">B</span>
+                        <span>证号（数字）</span>
+                        <span class="col-value">从证号提取</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">C</span>
+                        <span>律所</span>
+                        <span class="col-value">固定：ZH</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">D</span>
+                        <span>证号全称</span>
+                        <span class="col-value">从输入读取</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">E</span>
+                        <span>公证处</span>
+                        <span class="col-value">固定：LG</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">F</span>
+                        <span>（空列）</span>
+                        <span class="col-value">-</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">G</span>
+                        <span>取证平台</span>
+                        <span class="col-value">根据案件类型</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">H</span>
+                        <span>网站</span>
+                        <span class="col-value">根据案件类型</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">I</span>
+                        <span>作品名称</span>
+                        <span class="col-value">从输入读取</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">J</span>
+                        <span>取证日期</span>
+                        <span class="col-value">从输入读取</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">K</span>
+                        <span>侵权形式</span>
+                        <span class="col-value">固定：间接侵权</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">L</span>
+                        <span>（空列）</span>
+                        <span class="col-value">-</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">M</span>
+                        <span>备注</span>
+                        <span class="col-value">根据案件类型</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">N</span>
+                        <span>线索提供者</span>
+                        <span class="col-value">固定：至合</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">O</span>
+                        <span>类型</span>
+                        <span class="col-value">固定：民事</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="col-num">P</span>
+                        <span>关联主体</span>
+                        <span class="col-value">根据案件类型</span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: #fff7e6; border-radius: 10px; border: 1px solid #ffd591;">
+                    <strong>🧠 填写规则：</strong><br>
+                    • <b>G列（取证平台）</b>：<br>
+                    　"OPPO"→"OPPO手机" / "VIVO"→"VIVO手机" / "迅雷浏览器"→"安卓手机端"<br>
+                    　"B站"：公证书号→"安卓手机端" / TSA→"PC客户端"<br>
+                    • <b>H列（网站）</b>："OPPO/VIVO/迅雷"→"迅雷" / "B站"→"哔哩哔哩"<br>
+                    • <b>M列（备注）</b>：<br>
+                    　"OPPO"→"OPPO浏览器自带迅雷极速播功能" / "VIVO"→"VIVO浏览器自带迅雷极速播功能" / "迅雷"→"迅雷浏览器的极速播功能"<br>
+                    　"B站"→"证号出现次数条视频播放；影视分区"（如"5条视频播放；影视分区"）<BR>
+                    • <b>P列（关联主体）</b>："OPPO"→"广东欢太科技有限公司" / "VIVO"→"广东天宸网络科技有限公司" / "迅雷浏览器"→"深圳迅雷网络科技有限公司" / "B站"→"上海宽娱数码科技有限公司"
+                </div>
+            </div>
+        </div>
+
+        <!-- Excel文件上传 -->
+        <div class="card">
+            <div class="card-title">
+                <div class="icon">📁</div>
+                导入Excel文件
+            </div>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon-big">📂</div>
+                <h3>拖拽Excel文件到此处</h3>
+                <p>或点击选择文件（支持 .xlsx, .xls 格式）</p>
+                <button class="btn-upload">
+                    <span>📂</span> 选择文件
+                </button>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+            </div>
+            
+            <!-- 文件信息 -->
+            <div class="file-info" id="fileInfo">
+                <span class="file-icon">📊</span>
+                <div class="file-details">
+                    <h4 id="fileName">文件名</h4>
+                    <p id="fileSize">文件大小</p>
+                </div>
+                <button class="btn-remove" onclick="clearFile()">移除</button>
+            </div>
+
+            <!-- 选项面板（工作表选择 + 案件类型 + 日期筛选） -->
+            <div class="options-panel" id="optionsPanel">
+                <div class="option-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 24px; font-weight: 600; color: #389e0d; display: block; margin-bottom: 10px;">📑 选择工作表</label>
+                    <select id="sheetSelect" onchange="autoDetectCaseType()" style="width: 100%; padding: 18px 20px; font-size: 22px; border: 2px solid var(--border); border-radius: 12px;">
+                        <option value="">请选择工作表...</option>
+                    </select>
+                </div>
+                <div class="option-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 24px; font-weight: 600; color: #389e0d; display: block; margin-bottom: 10px;">📋 案件类型（自动识别）</label>
+                    <select id="caseTypeSelect" required style="width: 100%; padding: 18px 20px; font-size: 22px; border: 2px solid var(--border); border-radius: 12px;">
+                        <option value="">请选择案件类型...</option>
+                        <option value="B站">B站</option>
+                        <option value="OPPO">OPPO</option>
+                        <option value="VIVO">VIVO</option>
+                        <option value="迅雷浏览器">迅雷浏览器</option>
+                    </select>
+                    <div class="date-hint" style="margin-top: 8px; font-size: 18px; color: var(--danger);">* 根据工作表名自动识别，可手动修改</div>
+                </div>
+                <div class="option-group" style="margin-bottom: 25px;">
+                    <label style="font-size: 24px; font-weight: 600; color: #389e0d; display: block; margin-bottom: 10px;">📅 筛选日期（>= 该日期）</label>
+                    <input type="date" id="filterDate" required style="width: 100%; padding: 18px 20px; font-size: 22px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer;">
+                    <div class="date-hint" style="margin-top: 8px; font-size: 18px; color: var(--danger);">* 必填：将只保留取证日期大于等于此日期的记录</div>
+                </div>
+                <button class="btn-recognize" id="recognizeBtn" onclick="startRecognition()">
+                    🚀 开始识别
+                </button>
+            </div>
+        </div>
+
+        <!-- 输出结果（16列标准格式） -->
+        <div class="card result-section" id="resultSection">
+            <div class="card-title">
+                <div class="icon">📤</div>
+                输出结果（16列标准格式 - 去重后）
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="exportExcel()">
+                    📊 导出Excel（16列标准格式）
+                </button>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">
+                    📋 复制到剪贴板
+                </button>
+            </div>
+            <div class="btn-group" style="margin-top: 15px; padding: 20px; background: #f0f7ff; border-radius: 12px; border: 2px dashed #91d5ff;">
+                <label style="font-size: 22px; color: #096dd9; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                    📁 追加到已有文件：
+                    <input type="file" id="appendFileInput" accept=".xlsx,.xls" onchange="appendToExistingFile(event)" style="display: none;">
+                    <button class="btn btn-warning" onclick="document.getElementById('appendFileInput').click()">
+                        📂 选择文件追加
+                    </button>
+                </label>
+                <span style="font-size: 18px; color: #666; margin-left: 10px;">将当前数据追加到选定的Excel文件中</span>
+            </div>
+            <div class="table-container">
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th>A</th>
+                            <th>B<br>证号</th>
+                            <th>C<br>律所</th>
+                            <th>D<br>证号全称</th>
+                            <th>E<br>公证处</th>
+                            <th>F</th>
+                            <th>G<br>取证平台</th>
+                            <th>H<br>网站</th>
+                            <th>I<br>作品名称</th>
+                            <th>J<br>取证日期</th>
+                            <th>K<br>侵权形式</th>
+                            <th>L</th>
+                            <th>M</th>
+                            <th>N<br>线索提供者</th>
+                            <th>O<br>类型</th>
+                            <th>P<br>关联主体</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 数据列表（只显示未被日期筛选的数据） -->
+        <div class="card" id="dataListSection" style="display: none;">
+            <div class="card-title">
+                <div class="icon">✏️</div>
+                数据列表（已筛选）
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="addRow()">
+                    ➕ 添加一行
+                </button>
+                <button class="btn btn-danger" onclick="deleteSelected()">
+                    ❌ 删除选中
+                </button>
+                <button class="btn btn-warning" onclick="clearAll()">
+                    🗑️ 清空全部
+                </button>
+                <label class="toggle-dup">
+                    <input type="checkbox" id="hideDup" onchange="toggleDuplicate()">
+                    隐藏重复行
+                </label>
+            </div>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                            <th>序号</th>
+                            <th>作品名称</th>
+                            <th>证号全称</th>
+                            <th>证号</th>
+                            <th>网站</th>
+                            <th>取证平台</th>
+                            <th>取证日期</th>
+                            <th>状态</th>
+                            <th style="width: 100px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr class="empty-row">
+                            <td colspan="10">
+                                <div class="empty-state">
+                                    <div class="icon">📋</div>
+                                    <h3>暂无数据</h3>
+                                    <p>请先导入Excel文件并点击"开始识别"</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let data = [];
+        let nextId = 1;
+        let importedFiles = 0;
+        let currentWorkbook = null;
+        let currentCaseType = ''; // 当前案件类型
+
+        // 拖拽上传
+        const uploadZone = document.getElementById('uploadZone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.remove('dragover');
+            }, false);
+        });
+
+        uploadZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFiles(files[0]);
+            }
+        }
+
+        // 文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFiles(file);
+            }
+        }
+
+        // 处理文件
+        function handleFiles(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                alert('请选择Excel文件（.xlsx 或 .xls 格式）');
+                return;
+            }
+
+            // 显示文件信息
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileInfo').classList.add('active');
+
+            // 读取文件
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                currentWorkbook = XLSX.read(data, {type: 'array'});
+                
+                // 显示选项面板
+                const optionsPanel = document.getElementById('optionsPanel');
+                const sheetSelect = document.getElementById('sheetSelect');
+                sheetSelect.innerHTML = '<option value="">请选择工作表...</option>';
+                
+                currentWorkbook.SheetNames.forEach((name) => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    sheetSelect.appendChild(option);
+                });
+                
+                optionsPanel.classList.add('active');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 自动识别案件类型
+        function autoDetectCaseType() {
+            const sheetName = document.getElementById('sheetSelect').value;
+            const caseTypeSelect = document.getElementById('caseTypeSelect');
+            
+            if (!sheetName) {
+                caseTypeSelect.value = '';
+                return;
+            }
+            
+            // 根据工作表名自动识别案件类型
+            if (sheetName.includes('B站')) {
+                caseTypeSelect.value = 'B站';
+            } else if (sheetName.includes('OPPO')) {
+                caseTypeSelect.value = 'OPPO';
+            } else if (sheetName.includes('VIVO')) {
+                caseTypeSelect.value = 'VIVO';
+            } else if (sheetName.includes('迅雷')) {
+                caseTypeSelect.value = '迅雷浏览器';
+            } else {
+                // 不匹配任何关键词，置空让用户手动选择
+                caseTypeSelect.value = '';
+            }
+        }
+
+        // 开始识别
+        function startRecognition() {
+            const sheetName = document.getElementById('sheetSelect').value;
+            const caseType = document.getElementById('caseTypeSelect').value;
+            const filterDate = document.getElementById('filterDate').value;
+            
+            if (!sheetName) {
+                alert('请选择工作表');
+                return;
+            }
+            
+            if (!caseType) {
+                alert('请选择案件类型');
+                return;
+            }
+            
+            if (!filterDate) {
+                alert('请选择筛选日期');
+                return;
+            }
+            
+            if (!currentWorkbook) {
+                alert('请先导入Excel文件');
+                return;
+            }
+
+            // 保存当前案件类型
+            currentCaseType = caseType;
+
+            showLoading(true);
+            
+            setTimeout(() => {
+                const worksheet = currentWorkbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                
+                // 解析筛选日期
+                const filterDateObj = new Date(filterDate);
+                filterDateObj.setHours(0, 0, 0, 0);
+                
+                // 解析数据（跳过表头）
+                let newData = [];
+                let filteredCount = 0;
+                let certNoCache = {}; // 缓存：日期_作品名称 -> 证号
+                
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row[1] || row[0]) { // 有序号或作品名称
+                        let certNo = row[2] || '';
+                        const rowDate = parseDate(row[4]);
+                        const workName = row[1] || '';
+                        
+                        // 如果证号为空，在同日期、同作品的上下行中找证号
+                        if (!certNo && rowDate && workName) {
+                            const cacheKey = rowDate + '_' + workName;
+                            if (certNoCache[cacheKey]) {
+                                certNo = certNoCache[cacheKey];
+                            }
+                        }
+                        
+                        // 如果有证号，缓存起来供后续使用
+                        if (certNo && rowDate && workName) {
+                            const cacheKey = rowDate + '_' + workName;
+                            certNoCache[cacheKey] = certNo;
+                        }
+                        
+                        // 如果证号是TSA格式，前面加上"【电子存证】"
+                        if (certNo && certNo.toUpperCase().includes('TSA')) {
+                            certNo = '【电子存证】' + certNo;
+                        }
+                        const certNoNum = extractCertNoNumber(certNo);
+                        
+                        // 根据案件类型获取G、H、M、P列的值
+                        let { platform, website, mColumn, relatedEntity } = getValuesByCaseType(caseType);
+                        
+                        // B站特殊处理：根据D列证号格式确定G列
+                        if (caseType === 'B站') {
+                            if (certNo.includes('【电子存证】') || certNo.toUpperCase().includes('TSA')) {
+                                // TSA格式
+                                platform = 'PC客户端';
+                            } else if (certNo.match(/第\d+号/)) {
+                                // 公证书号格式
+                                platform = '安卓手机端';
+                            }
+                        }
+                        
+                        // 日期筛选
+                        let isFiltered = false;
+                        if (rowDate) {
+                            const rowDateObj = new Date(rowDate);
+                            rowDateObj.setHours(0, 0, 0, 0);
+                            if (rowDateObj < filterDateObj) {
+                                isFiltered = true;
+                                filteredCount++;
+                            }
+                        }
+                        
+                        newData.push({
+                            id: nextId++,
+                            seq: row[0] || i,
+                            name: row[1] || '',
+                            certNo: certNo,
+                            certNoNum: certNoNum,
+                            port: platform,        // G列：取证平台
+                            date: rowDate,
+                            website: website,      // H列：网站
+                            mColumn: mColumn,      // M列：备注说明
+                            relatedEntity: relatedEntity,  // P列：关联主体
+                            isFiltered: isFiltered
+                        });
+                    }
+                }
+
+                if (newData.length > 0) {
+                    data = newData;
+                    importedFiles++;
+                    processData();
+                    updateStats();
+                    renderTable();
+                    renderResultTable();
+                    showLoading(false);
+                    
+                    // 显示数据列表区域
+                    document.getElementById('dataListSection').style.display = 'block';
+                    
+                    if (filteredCount > 0) {
+                        alert(`识别完成！共${newData.length}条记录，已过滤${filteredCount}条早于${filterDate}的记录`);
+                    }
+                } else {
+                    showLoading(false);
+                    alert('该工作表中没有找到有效数据');
+                }
+            }, 300);
+        }
+
+        // 解析日期（支持Excel日期和字符串）
+        function parseDate(value) {
+            if (!value) return '';
+            
+            // 如果是数字（Excel日期格式）
+            if (typeof value === 'number') {
+                const date = XLSX.SSF.parse_date_code(value);
+                if (date) {
+                    return `${date.y}/${date.m}/${date.d}`;
+                }
+            }
+            
+            // 字符串日期
+            return String(value).trim();
+        }
+
+        // 从证号全称提取B列值
+        function extractCertNoNumber(certNo) {
+            if (!certNo) return '';
+            // 匹配"第xx号"格式，提取数字
+            const match = certNo.match(/第(\d+)号/);
+            if (match) {
+                return match[1];
+            }
+            // 匹配TSA格式，返回"时间戳"
+            if (certNo.toUpperCase().includes('TSA')) {
+                return '时间戳';
+            }
+            return '';
+        }
+
+        // 根据设备类型获取网站和备注
+        // 根据案件类型获取G列、H列、M列、P列的值
+        function getValuesByCaseType(caseType) {
+            const result = {
+                platform: '',      // G列：取证平台
+                website: '',       // H列：网站
+                mColumn: '',       // M列：备注说明
+                relatedEntity: ''  // P列：关联主体
+            };
+            
+            switch(caseType) {
+                case 'OPPO':
+                    result.platform = 'OPPO手机';
+                    result.website = '迅雷';
+                    result.mColumn = 'OPPO浏览器自带迅雷极速播功能';
+                    result.relatedEntity = '广东欢太科技有限公司';
+                    break;
+                case 'VIVO':
+                    result.platform = 'VIVO手机';
+                    result.website = '迅雷';
+                    result.mColumn = 'VIVO浏览器自带迅雷极速播功能';
+                    result.relatedEntity = '广东天宸网络科技有限公司';
+                    break;
+                case '迅雷浏览器':
+                    result.platform = '安卓手机端';
+                    result.website = '迅雷';
+                    result.mColumn = '迅雷浏览器的极速播功能';
+                    result.relatedEntity = '深圳迅雷网络科技有限公司';
+                    break;
+                case 'B站':
+                    result.platform = '';
+                    result.website = '哔哩哔哩';
+                    result.mColumn = '';
+                    result.relatedEntity = '上海宽娱数码科技有限公司';
+                    break;
+            }
+            
+            return result;
+        }
+
+        // 保留原函数以兼容（不再使用）
+        function getWebsiteAndRemark(deviceType) {
+            return { website: '', remark: '' };
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 移除文件
+        function clearFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.remove('active');
+            document.getElementById('optionsPanel').classList.remove('active');
+            document.getElementById('caseTypeSelect').value = '';
+            currentWorkbook = null;
+            currentCaseType = '';
+        }
+
+        // 显示/隐藏加载
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+        }
+
+        // 处理数据（去重）
+        // 处理数据（去重 + 统计B站M列）
+        function processData() {
+            const certMap = new Map();
+            const certCountMap = {}; // 统计同一证号的出现次数
+            
+            // 第一遍：统计所有证号的出现次数（只统计未过滤的数据）
+            data.forEach((item) => {
+                if (!item.isFiltered && item.certNo) {
+                    if (!certCountMap[item.certNo]) {
+                        certCountMap[item.certNo] = 0;
+                    }
+                    certCountMap[item.certNo]++;
+                }
+            });
+            
+            // 第二遍：去重标记 + 填写B站M列
+            data.forEach((item) => {
+                // 只处理未过滤的数据
+                if (!item.isFiltered) {
+                    // 去重标记（基于证号全称）
+                    if (certMap.has(item.certNo)) {
+                        item.isDuplicate = true;
+                        item.uniqueMark = '';
+                    } else {
+                        item.isDuplicate = false;
+                        item.uniqueMark = '1';
+                        certMap.set(item.certNo, true);
+                    }
+                    
+                    // B站类型：填写M列为"X条视频播放；影视分区"
+                    if (currentCaseType === 'B站' && item.certNo) {
+                        const count = certCountMap[item.certNo] || 0;
+                        item.mColumn = count + '条视频播放；影视分区';
+                    }
+                }
+            });
+        }
+
+        // 渲染表格
+        // 渲染数据列表（只显示未被日期筛选的数据）
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            // 只显示未被日期筛选的数据
+            const displayData = data.filter(item => !item.isFiltered);
+            
+            if (displayData.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="empty-row">
+                        <td colspan="10">
+                            <div class="empty-state">
+                                <div class="icon">📋</div>
+                                <h3>暂无数据</h3>
+                                <p>所有数据均已被日期筛选过滤，请调整筛选日期</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = displayData.map((item) => `
+                <tr class="${item.isDuplicate ? 'duplicate' : ''}" data-id="${item.id}">
+                    <td><input type="checkbox" class="row-check" style="width: 28px; height: 28px;" data-id="${item.id}"></td>
+                    <td><input type="text" class="input-cell" value="${item.seq}" onchange="updateData(${item.id}, 'seq', this.value)"></td>
+                    <td><input type="text" class="input-cell" value="${item.name}" onchange="updateData(${item.id}, 'name', this.value)" style="min-width: 180px;"></td>
+                    <td><input type="text" class="input-cell" value="${item.certNo}" onchange="updateData(${item.id}, 'certNo', this.value)" style="min-width: 220px;"></td>
+                    <td>${item.certNoNum}</td>
+                    <td><span class="tag tag-smart">${item.website || '-'}</span></td>
+                    <td>
+                        <select class="input-cell" onchange="updateData(${item.id}, 'port', this.value)">
+                            <option value="">请选择</option>
+                            <option value="iPhone" ${item.port === 'iPhone' ? 'selected' : ''}>iPhone</option>
+                            <option value="Android" ${item.port === 'Android' ? 'selected' : ''}>Android</option>
+                            <option value="安卓手机端" ${item.port === '安卓手机端' ? 'selected' : ''}>安卓手机端</option>
+                            <option value="OPPO手机" ${item.port === 'OPPO手机' ? 'selected' : ''}>OPPO手机</option>
+                            <option value="VIVO手机" ${item.port === 'VIVO手机' ? 'selected' : ''}>VIVO手机</option>
+                            <option value="PC客户端" ${item.port === 'PC客户端' ? 'selected' : ''}>PC客户端</option>
+                            <option value="iPad" ${item.port === 'iPad' ? 'selected' : ''}>iPad</option>
+                            <option value="网页" ${item.port === '网页' ? 'selected' : ''}>网页</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="input-cell" value="${item.date}" onchange="updateData(${item.id}, 'date', this.value)" placeholder="2026/3/13"></td>
+                    <td>
+                        ${item.isDuplicate 
+                            ? '<span class="tag tag-dup">重复</span>' 
+                            : '<span class="tag tag-unique">有效</span>'}
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 10px 16px; font-size: 18px;" onclick="deleteRow(${item.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 渲染结果表格（16列标准格式）
+        function renderResultTable() {
+            // 只显示未过滤且未重复的数据
+            const validData = data.filter(item => !item.isFiltered && !item.isDuplicate);
+            const resultBody = document.getElementById('resultBody');
+            const resultSection = document.getElementById('resultSection');
+
+            if (validData.length > 0) {
+                resultSection.classList.add('active');
+                resultBody.innerHTML = validData.map((item) => `
+                    <tr>
+                        <td></td>
+                        <td>${item.certNoNum}</td>
+                        <td><span class="tag tag-fixed">ZH</span></td>
+                        <td>${item.certNo}</td>
+                        <td><span class="tag tag-fixed">LG</span></td>
+                        <td></td>
+                        <td>${item.port}</td>
+                        <td><span class="tag tag-smart">${item.website}</span></td>
+                        <td>${item.name}</td>
+                        <td>${item.date}</td>
+                        <td><span class="tag tag-fixed">间接侵权</span></td>
+                        <td></td>
+                        <td>${item.mColumn}</td>
+                        <td><span class="tag tag-fixed">至合</span></td>
+                        <td><span class="tag tag-fixed">民事</span></td>
+                        <td>${item.relatedEntity}</td>
+                    </tr>
+                `).join('');
+            } else {
+                resultSection.classList.remove('active');
+            }
+        }
+
+        // 更新数据
+        function updateData(id, field, value) {
+            const item = data.find(d => d.id === id);
+            if (item && !item.isFiltered) {
+                item[field] = value;
+                
+                // 如果修改了证号，重新提取数字
+                if (field === 'certNo') {
+                    item.certNoNum = extractCertNoNumber(value);
+                }
+                
+                processData();
+                updateStats();
+                renderResultTable();
+            }
+        }
+
+        // 添加行
+        function addRow() {
+            data.push({
+                id: nextId++,
+                seq: data.length + 1,
+                name: '',
+                certNo: '',
+                certNoNum: '',
+                port: '',
+                date: '',
+                website: '',
+                mColumn: '',
+                relatedEntity: '',
+                isFiltered: false,
+                isDuplicate: false,
+                uniqueMark: '1'
+            });
+            processData();
+            renderTable();
+            updateStats();
+        }
+
+        // 删除行
+        function deleteRow(id) {
+            data = data.filter(d => d.id !== id);
+            processData();
+            renderTable();
+            updateStats();
+        }
+
+        // 全选
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.row-check:not(:disabled)');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+
+        // 删除选中
+        function deleteSelected() {
+            const checkboxes = document.querySelectorAll('.row-check:checked');
+            if (checkboxes.length === 0) {
+                alert('请先选择要删除的行');
+                return;
+            }
+            if (!confirm(`确定要删除选中的 ${checkboxes.length} 行吗？`)) return;
+            
+            const ids = Array.from(checkboxes).map(cb => parseInt(cb.dataset.id));
+            data = data.filter(d => !ids.includes(d.id));
+            processData();
+            renderTable();
+            updateStats();
+            document.getElementById('selectAll').checked = false;
+        }
+
+        // 清空全部
+        function clearAll() {
+            if (data.length === 0) return;
+            if (!confirm('确定要清空所有数据吗？')) return;
+            
+            data = [];
+            nextId = 1;
+            importedFiles = 0;
+            currentCaseType = '';
+            renderTable();
+            updateStats();
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('dataListSection').style.display = 'none';
+            clearFile();
+        }
+
+        // 更新统计
+        function updateStats() {
+            const total = data.length;
+            const filtered = data.filter(d => d.isFiltered).length;
+            const duplicates = data.filter(d => d.isDuplicate && !d.isFiltered).length;
+            const unique = data.filter(d => !d.isFiltered && !d.isDuplicate).length;
+
+            document.getElementById('fileCount').textContent = importedFiles;
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('dupCount').textContent = duplicates;
+            document.getElementById('uniqueCount').textContent = unique;
+        }
+
+        // 切换显示重复行
+        function toggleDuplicate() {
+            const hideDup = document.getElementById('hideDup').checked;
+            const dupRows = document.querySelectorAll('tr.duplicate');
+            dupRows.forEach(row => {
+                row.style.display = hideDup ? 'none' : '';
+            });
+        }
+
+        // 导出Excel（16列标准格式）
+        function exportExcel() {
+            // 只导出有效数据（未过滤且未重复）
+            const validData = data.filter(item => !item.isFiltered && !item.isDuplicate);
+            if (validData.length === 0) {
+                alert('没有可导出的有效数据');
+                return;
+            }
+
+            // 按照16列标准格式导出（A列空，原15列整体右移，P列改为关联主体）
+            const exportData = validData.map((item) => ({
+                '空列A': '',
+                '证号': item.certNoNum,
+                '律所': 'ZH',
+                '证号全称': item.certNo,
+                '公证处': 'LG',
+                '空列F': '',
+                '取证平台': item.port,
+                '网站': item.website,
+                '作品名称': item.name,
+                '取证日期': item.date,
+                '侵权形式': '间接侵权',
+                '空列L': '',
+                '备注': item.mColumn,
+                '线索提供者': '至合',
+                '类型': '民事',
+                '关联主体': item.relatedEntity
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '取证清单');
+            
+            // 设置列宽（16列）
+            ws['!cols'] = [
+                {wch: 5},   // 空列A
+                {wch: 10},  // 证号
+                {wch: 8},   // 律所
+                {wch: 35},  // 证号全称
+                {wch: 10},  // 公证处
+                {wch: 5},   // 空列F
+                {wch: 15},  // 取证平台
+                {wch: 12},  // 网站
+                {wch: 25},  // 作品名称
+                {wch: 15},  // 取证日期
+                {wch: 12},  // 侵权形式
+                {wch: 5},   // 空列L
+                {wch: 35},  // 备注
+                {wch: 12},  // 线索提供者
+                {wch: 10},  // 类型
+                {wch: 35}   // 关联主体
+            ];
+
+            const date = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `爱奇艺取证清单_16列标准_${date}.xlsx`);
+        }
+
+        // 追加到已有文件
+        function appendToExistingFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                alert('请选择Excel文件（.xlsx 或 .xls 格式）');
+                return;
+            }
+            
+            // 获取当前有效数据（未过滤且未重复）
+            const newData = data.filter(item => !item.isFiltered && !item.isDuplicate);
+            if (newData.length === 0) {
+                alert('没有可追加的数据，请先导入并处理数据');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const existingData = new Uint8Array(e.target.result);
+                    const existingWB = XLSX.read(existingData, {type: 'array'});
+                    
+                    // 获取第一个工作表的数据
+                    const firstSheetName = existingWB.SheetNames[0];
+                    const existingWS = existingWB.Sheets[firstSheetName];
+                    const existingJson = XLSX.utils.sheet_to_json(existingWS, {header: 1});
+                    
+                    // 准备新数据
+                    const newRows = newData.map((item) => [
+                        '',                          // A列：空
+                        item.certNoNum,              // B列：证号
+                        'ZH',                        // C列：律所
+                        item.certNo,                 // D列：证号全称
+                        'LG',                        // E列：公证处
+                        '',                          // F列：空
+                        item.port,                   // G列：取证平台
+                        item.website,                // H列：网站
+                        item.name,                   // I列：作品名称
+                        item.date,                   // J列：取证日期
+                        '间接侵权',              // K列：侵权形式
+                        '',                          // L列：空
+                        item.mColumn,                // M列：备注
+                        '至合',                   // N列：线索提供者
+                        '民事',                   // O列：类型
+                        item.relatedEntity           // P列：关联主体
+                    ]);
+                    
+                    // 合并数据
+                    let combinedData;
+                    if (existingJson.length === 0 || (existingJson.length === 1 && existingJson[0].length === 0)) {
+                        // 如果现有文件为空，添加表头
+                        combinedData = [
+                            ['', '证号', '律所', '证号全称', '公证处', '', '取证平台', '网站', '作品名称', '取证日期', '侵权形式', '', '备注', '线索提供者', '类型', '关联主体'],
+                            ...newRows
+                        ];
+                    } else if (existingJson.length === 1) {
+                        // 只有表头，追加数据
+                        combinedData = [...existingJson, ...newRows];
+                    } else {
+                        // 有表头和数据，追加在后面
+                        combinedData = [...existingJson, ...newRows];
+                    }
+                    
+                    // 创建新的工作簿
+                    const newWS = XLSX.utils.aoa_to_sheet(combinedData);
+                    const newWB = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(newWB, newWS, firstSheetName);
+                    
+                    // 设置列宽
+                    newWS['!cols'] = [
+                        {wch: 5},   // A
+                        {wch: 10},  // B
+                        {wch: 8},   // C
+                        {wch: 35},  // D
+                        {wch: 10},  // E
+                        {wch: 5},   // F
+                        {wch: 15},  // G
+                        {wch: 12},  // H
+                        {wch: 25},  // I
+                        {wch: 15},  // J
+                        {wch: 12},  // K
+                        {wch: 5},   // L
+                        {wch: 35},  // M
+                        {wch: 12},  // N
+                        {wch: 10},  // O
+                        {wch: 35}   // P
+                    ];
+                    
+                    // 导出文件
+                    XLSX.writeFile(newWB, file.name);
+                    
+                    showLoading(false);
+                    alert(`追加成功！已将 ${newData.length} 条新数据追加到文件中。\n原文件有 ${existingJson.length - 1} 条数据，合并后共 ${combinedData.length - 1} 条数据。`);
+                    
+                } catch (error) {
+                    showLoading(false);
+                    alert('追加失败：' + error.message);
+                    console.error(error);
+                }
+            };
+            reader.onerror = function() {
+                showLoading(false);
+                alert('读取文件失败');
+            };
+            reader.readAsArrayBuffer(file);
+            
+            // 清空文件输入，允许再次选择同一文件
+            event.target.value = '';
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard() {
+            const validData = data.filter(item => !item.isFiltered && !item.isDuplicate);
+            if (validData.length === 0) {
+                alert('没有可复制的内容');
+                return;
+            }
+
+            let text = '\t证号\t律所\t证号全称\t公证处\t\t取证平台\t网站\t作品名称\t取证日期\t侵权形式\t\t备注\t线索提供者\t类型\t关联主体\n';
+            validData.forEach((item) => {
+                text += `\t${item.certNoNum}\tZH\t${item.certNo}\tLG\t\t${item.port}\t${item.website}\t${item.name}\t${item.date}\t间接侵权\t\t${item.mColumn}\t至合\t民事\t${item.relatedEntity}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板，可直接粘贴到Excel');
+            }).catch(() => {
+                alert('复制失败，请手动复制');
+            });
+        }
+
+        // 初始化
+        renderTable();
+    </script>
+</body>
+</html>
